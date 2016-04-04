@@ -1,0 +1,18 @@
+{
+    "version": "0.3.3",
+    "name": "com.zegenie.cordova.plugin.inappbrowserxwalk",
+    "cordova_name": "InAppBrowser Crosswalk",
+    "keywords": [
+			"ecosystem:cordova",
+			"cordova-android"
+    ],
+    "platforms": [
+      "android"
+    ],
+    "engines": [
+      {
+        "name": "cordova",
+        "version": ">=3.4.0"
+      }
+    ]
+}

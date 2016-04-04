@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
+        id="com.zegenie.cordova.plugin.inappbrowserxwalk"
+        version="0.3.3">
+
+  <name>InAppBrowser Crosswalk</name>
+
+  <engines>
+    <engine name="cordova" version=">=3.4.0"/>
+  </engines>
+
+  <asset src="www/inappbrowserxwalk.js" target="js/inappbrowserxwalk.js"/>
+
+  <js-module src="www/inappbrowserxwalk.js" name="inAppBrowserXwalk">
+    <clobbers target="inAppBrowserXwalk" />
+  </js-module>
+<!-- ios -->
+    <platform name="ios">
+
+        <config-file target="config.xml" parent="/*">
+            <feature name="InAppBrowserXwalk">
+                <param name="ios-package" value="CDVEmbeddedWebView" /> 
+            </feature>
+        </config-file>
+
+      <header-file src="src/ios/CDVWebview.h" />
+      <source-file src="src/ios/CDVWebview.m" />
+      
+      <framework src="CoreGraphics.framework" />
+    </platform>    
+
+<!-- android -->
+  <platform name="android">
+    <config-file target="res/xml/config.xml" parent="/*">
+      <feature name="InAppBrowserXwalk">
+        <param name="android-package" value="com.zegenie.plugin.InAppBrowserXwalk.InAppBrowserXwalk"/>
+      </feature>
+    </config-file>
+    <source-file src="src/android/InAppBrowserXwalk.java" target-dir="src/com/zegenie/plugin/"/>
+    <source-file src="src/android/BrowserDialog.java" target-dir="src/com/zegenie/plugin/"/>
+  </platform>
+
+
+</plugin>
