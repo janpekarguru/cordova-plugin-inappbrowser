@@ -7,8 +7,21 @@
 			"cordova-android"
     ],
     "platforms": [
-      "android"
-    ],
+      "android",
+      "ios"
+    ],,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/janpekarguru/cordova-plugin-inappbrowser"
+  },
+  "keywords": [
+    "cordova",
+    "webview",
+    "embedded",
+    "ecosystem:cordova",
+    "cordova-android",
+    "cordova-ios"
+  ],
     "engines": [
       {
         "name": "cordova",
