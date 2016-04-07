@@ -1,7 +1,10 @@
+
 /*global cordova, module*/
 
 var xwalks = new Array();
 var callbacks = new Array();
+var x=navigator.userAgent;
+var is_iOS=x.match(/(ios)|(iphone)|(ipod)|(ipad)/ig);
 
 function InAppBrowserXwalk(index) {
   this.index = index;
@@ -35,6 +38,8 @@ InAppBrowserXwalk.prototype = {
   },
   insertCSS: function(styles) {
     var code = "var link = document.createElement('link'); link.type='text/css'; link.innerHTML = '" + styles + "'; document.getElementsByTagName('head')[0].appendChild(link);";
+    if (is_iOS)
+      code="(function(d) { var c = d.createElement('style'); c.innerHTML = '"+styles+"'; d.head.appendChild(c); })(document)";
     cordova.exec(null, null, "InAppBrowserXwalk", "injectJS", [this.index, code]);
   },
   insertCSSFile: function(path) {
@@ -42,10 +47,10 @@ InAppBrowserXwalk.prototype = {
     cordova.exec(null, null, "InAppBrowserXwalk", "injectJS", [this.index, code]);
   },
   hasHistory: function () {
-    exec(callback, callback, "InAppBrowserXwalk", "hasHistory", [this.index]);
+    cordova.exec(null, null, "InAppBrowserXwalk", "hasHistory", [this.index]);
   },
   goBack: function () {
-    exec(null, null, "InAppBrowserXwalk", "goBack", [this.index]);
+    cordova.exec(null, null, "InAppBrowserXwalk", "goBack", [this.index]);
   },
   getScreenshot: function(quality) {
     if (quality == null) quality = 75;
@@ -54,7 +59,8 @@ InAppBrowserXwalk.prototype = {
 }
 
 var callback = function(event) {
-  if (event.type !== undefined && callbacks[event.type] !== undefined) {
+    if (typeof log== "function")log(event,"event");
+    if (event.type !== undefined && callbacks[event.type] !== undefined) {
     callbacks[event.type](event);
   }
 }
@@ -62,7 +68,7 @@ var callback = function(event) {
 module.exports = {
   open: function (index, url, options) {
     if (index < 0 || index > 6) return null;
-    cordova.exec(callback, null, "InAppBrowserXwalk", "open", [index, url, options]);
+    cordova.exec(callback, callback, "InAppBrowserXwalk", "open", [index, url, options]);
     return new InAppBrowserXwalk(index);
   },
   addEventListener: function (eventname, func) {
@@ -72,3 +78,4 @@ module.exports = {
     callbacks[eventname] = undefined;
   }
 };
+
