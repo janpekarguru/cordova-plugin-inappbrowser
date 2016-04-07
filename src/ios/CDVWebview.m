@@ -49,9 +49,9 @@
    
     _brw = [NSMutableArray array];
    
-    for (int i=0;i<6;i++){
+    /*for (int i=0;i<6;i++){
         [_brw addObject:[[CDVEmbeddedWebViewPlug alloc]init]];
-    }
+    }*/
 }
 
 - (void)open:(CDVInvokedUrlCommand*)command
@@ -73,7 +73,7 @@
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
         
         //[self openInWebPlug:absoluteUrl withOptions:options];
-        [self openInWebPlug:absoluteUrl index:i withOptions:options];
+        [self openInWebPlug:absoluteUrl index:i CallBack:command.callbackId withOptions:options];
         
     } else {
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"incorrect number of arguments"];
@@ -90,9 +90,8 @@
     NSString* url = [command argumentAtIndex:1];
     CDVEmbeddedWebViewPlug* el=[self.brw objectAtIndex:i.intValue];
     
-    //if (self.webplug == nil) {
     if (el == nil) {
-        NSLog(@"Tried to show IAB after it was closed. Load");
+        NSLog(@"Tried to load IAB after it was closed.");
         return;
     }
     if (url != nil) {
@@ -102,16 +101,8 @@
         NSURL* baseUrl = [self.webView.request URL];
 #endif
         NSURL* absoluteUrl = [[NSURL URLWithString:url relativeToURL:baseUrl] absoluteURL];
-        
-        //[self.webplug navigateTo:absoluteUrl];
-        
-        
         [el navigateTo:absoluteUrl];
-        
     }
-    // else {
-    //     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"incorrect number of arguments"];
-    // }
 }
 
 - (void)close:(CDVInvokedUrlCommand*)command
@@ -130,6 +121,7 @@
         CDVEmbeddedWebViewPlug* el=[self.brw objectAtIndex:i.intValue];
         [el removeFromSuperview];
         el = nil;
+        [self.brw removeObjectAtIndex:i.intValue];
     });
 }
 
@@ -165,7 +157,7 @@
     CDVEmbeddedWebViewPlug* el=[self.brw objectAtIndex:i.intValue];
     //if (self.webplug == nil) {
     if (el == nil) {
-        NSLog(@"Tried to show IAB after it was closed.Set Position");
+        NSLog(@"Tried to set position for IAB after it was closed.");
         return;
     }
     
@@ -194,11 +186,11 @@
     CDVEmbeddedWebViewPlug* el=[self.brw objectAtIndex:i.intValue];
     //if (self.webplug == nil) {
     if (el == nil) {
-        NSLog(@"Tried to show IAB after it was closed.");
+        NSLog(@"Tried to set size for IAB after it was closed.");
         return;
     }
     if (command.arguments.count < 3) {
-        NSLog(@"Parameters is not long enough.");
+        NSLog(@"SET SIZE : Parameters not long enough.");
         return;
     }
     
@@ -216,10 +208,12 @@
     el.frame = frame;
 }
 
-- (void)openInWebPlug:(NSURL*)url index:(NSString*)i withOptions:(NSString*)options
+- (void)openInWebPlug:(NSURL*)url index:(NSString*)i CallBack:(NSString*)callbackId withOptions:(NSString*)options
 {
-    CDVEmbeddedWebViewPlug* el=[self.brw objectAtIndex:i.intValue];
+    CDVEmbeddedWebViewPlug* el;//=[self.brw objectAtIndex:i.intValue];
     CDVWebviewOptions* browserOptions = [CDVWebviewOptions parseOptions:options];
+    
+    
     
     if (browserOptions.clearcache) {
         NSHTTPCookie *cookie;
@@ -243,27 +237,17 @@
         }
     }
     
-    //if (self.webplug == nil) {
-    if (el == nil) {
+    if (el==nil) {
         NSString* originalUA = [CDVUserAgentUtil originalUserAgent];
-        
-        el = [[CDVEmbeddedWebViewPlug alloc] initWithUserAgent:originalUA prevUserAgent:[self.commandDelegate userAgent] browserOptions:browserOptions];
-        //self.webplug.navigationDelegate = self;
+        //NSLog(@"----------------JAN1--------- %@",i);
+        el = [[CDVEmbeddedWebViewPlug alloc] initWithUserAgent:originalUA prevUserAgent:[self.commandDelegate userAgent] browserOptions:browserOptions index:i callbackId:callbackId];
         el.navigationDelegate =self;
+        [_brw addObject:el];
     }
     
     
     // prevent webView from bouncing
     if (browserOptions.disallowoverscroll) {
-        /*if ([self.webplug respondsToSelector:@selector(scrollView)]) {
-            ((UIScrollView*)[self.webplug scrollView]).bounces = NO;
-        } else {
-            for (id subview in self.webplug.subviews) {
-                if ([[subview class] isSubclassOfClass:[UIScrollView class]]) {
-                    ((UIScrollView*)subview).bounces = NO;
-                }
-            }
-        }*/
         if ([el respondsToSelector:@selector(scrollView)]) {
             ((UIScrollView*)[el scrollView]).bounces = NO;
         } else {
@@ -340,11 +324,8 @@
     NSString* i = [command argumentAtIndex:0];
     CDVEmbeddedWebViewPlug* el=[self.brw objectAtIndex:i.intValue];
     NSString *encodedString = @"";
-
-    //if (self.webplug == nil) {
     if (el == nil) {
-    }
-    else {
+    }else {
         float fq = 1;
         if (command.arguments.count < 2) {
             NSString* sq = [command argumentAtIndex:1];
@@ -354,11 +335,15 @@
         //UIImage* image = [self imageFromWebView:self.webplug];
         UIImage* image = [self imageFromWebView:el];
         NSData *imageData = UIImageJPEGRepresentation(image, fq);
-        encodedString = [imageData base64Encoding];
+        //encodedString = [imageData base64Encoding];
+        encodedString =[imageData base64EncodedStringWithOptions:NSDataBase64EncodingEndLineWithLineFeed];
+        
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                     messageAsDictionary:@{@"type":@"onScreenshot", @"index":i,@"data":encodedString}];
+        
+        [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
     }
-
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK  messageAsString:encodedString];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 - (void)hasHistory:(CDVInvokedUrlCommand*)command
 {
@@ -366,18 +351,21 @@
     NSString* i = [command argumentAtIndex:0];
     CDVEmbeddedWebViewPlug* el=[self.brw objectAtIndex:i.intValue];
     NSString *ret = @"0";
-    
     //if (self.webplug == nil) {
     if (el == nil) {
-    }
-    else {
+    }else {
         if ([el canGoBack]) {
             ret=@"1";
         }
     }
+    //NSString *combined = [NSString stringWithFormat:@"{\"type\":\"hasHistory\",\"index\":%@,\"data\":%@}", i, ret];
+    //pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK  messageAsString:combined];
     
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK  messageAsString:ret];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                                  messageAsDictionary:@{@"type":@"hasHistory", @"index":i,@"data":ret}];
+    
+    [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
 }
 - (void)goBack:(CDVInvokedUrlCommand*)command
 {
@@ -389,131 +377,31 @@
     }
 }
 
-// This is a helper method for the inject{Script|Style}{Code|File} API calls, which
-// provides a consistent method for injecting JavaScript code into the document.
-//
-// If a wrapper string is supplied, then the source string will be JSON-encoded (adding
-// quotes) and wrapped using string formatting. (The wrapper string should have a single
-// '%@' marker).
-//
-// If no wrapper is supplied, then the source string is executed directly.
 
-- (void)injectDeferredObject:(NSString*)source index:(NSString*) i withWrapper:(NSString*)jsWrapper
+- (void)injectJS:(CDVInvokedUrlCommand*)command
 {
+    NSString* i = [command argumentAtIndex:0];
+    NSString* js = [command argumentAtIndex:1];
     CDVEmbeddedWebViewPlug* el=[self.brw objectAtIndex:i.intValue];
-    if (!_injectedIframeBridge) {
-        _injectedIframeBridge = YES;
-        // Create an iframe bridge in the new document to communicate with the CDVInAppBrowserViewController
-        [el stringByEvaluatingJavaScriptFromString:@"(function(d){var e = _cdvIframeBridge = d.createElement('iframe');e.style.display='none';d.body.appendChild(e);})(document)"];
-    }
-    
-    if (jsWrapper != nil) {
-        NSData* jsonData = [NSJSONSerialization dataWithJSONObject:@[source] options:0 error:nil];
-        NSString* sourceArrayString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-        if (sourceArrayString) {
-            NSString* sourceString = [sourceArrayString substringWithRange:NSMakeRange(1, [sourceArrayString length] - 2)];
-            NSString* jsToInject = [NSString stringWithFormat:jsWrapper, sourceString];
-            [el stringByEvaluatingJavaScriptFromString:jsToInject];
-        }
-    } else {
-        [el stringByEvaluatingJavaScriptFromString:source];
-    }
-}
-
-- (void)injectScriptCode:(CDVInvokedUrlCommand*)command
-{
-    NSString* jsWrapper = nil;
-    NSString* i = [command argumentAtIndex:0];
+    [el stringByEvaluatingJavaScriptFromString:js];
+    //NSLog(@"---------- injectJS ------- %@", js);
     
     
-    if ((command.callbackId != nil) && ![command.callbackId isEqualToString:@"INVALID"]) {
-        jsWrapper = [NSString stringWithFormat:@"_cdvIframeBridge.src='gap-iab://%@/'+encodeURIComponent(JSON.stringify([eval(%%@)]));", command.callbackId];
-    }
-    [self injectDeferredObject:[command argumentAtIndex:1] index:i withWrapper:jsWrapper];
 }
 
-- (void)injectScriptFile:(CDVInvokedUrlCommand*)command
-{
-    NSString* jsWrapper;
-    NSString* i = [command argumentAtIndex:0];
-    
-    if ((command.callbackId != nil) && ![command.callbackId isEqualToString:@"INVALID"]) {
-        jsWrapper = [NSString stringWithFormat:@"(function(d) { var c = d.createElement('script'); c.src = %%@; c.onload = function() { _cdvIframeBridge.src='gap-iab://%@'; }; d.body.appendChild(c); })(document)", command.callbackId];
-    } else {
-        jsWrapper = @"(function(d) { var c = d.createElement('script'); c.src = %@; d.body.appendChild(c); })(document)";
-    }
-    [self injectDeferredObject:[command argumentAtIndex:0] index:i withWrapper:jsWrapper];
-}
-
-- (void)injectStyleCode:(CDVInvokedUrlCommand*)command
-{
-    NSString* jsWrapper;
-    NSString* i = [command argumentAtIndex:0];
-    
-    if ((command.callbackId != nil) && ![command.callbackId isEqualToString:@"INVALID"]) {
-        jsWrapper = [NSString stringWithFormat:@"(function(d) { var c = d.createElement('style'); c.innerHTML = %%@; c.onload = function() { _cdvIframeBridge.src='gap-iab://%@'; }; d.body.appendChild(c); })(document)", command.callbackId];
-    } else {
-        jsWrapper = @"(function(d) { var c = d.createElement('style'); c.innerHTML = %@; d.body.appendChild(c); })(document)";
-    }
-    [self injectDeferredObject:[command argumentAtIndex:0] index:i withWrapper:jsWrapper];
-}
-
-- (void)injectStyleFile:(CDVInvokedUrlCommand*)command
-{
-    NSString* jsWrapper;
-    NSString* i = [command argumentAtIndex:0];
-    if ((command.callbackId != nil) && ![command.callbackId isEqualToString:@"INVALID"]) {
-        jsWrapper = [NSString stringWithFormat:@"(function(d) { var c = d.createElement('link'); c.rel='stylesheet'; c.type='text/css'; c.href = %%@; c.onload = function() { _cdvIframeBridge.src='gap-iab://%@'; }; d.body.appendChild(c); })(document)", command.callbackId];
-    } else {
-        jsWrapper = @"(function(d) { var c = d.createElement('link'); c.rel='stylesheet', c.type='text/css'; c.href = %@; d.body.appendChild(c); })(document)";
-    }
-    [self injectDeferredObject:[command argumentAtIndex:0] index:i withWrapper:jsWrapper];
-}
-
-- (BOOL)isValidCallbackId:(NSString *)callbackId
-{
-    NSError *err = nil;
-    // Initialize on first use
-    if (self.callbackIdPattern == nil) {
-        self.callbackIdPattern = [NSRegularExpression regularExpressionWithPattern:@"^InAppBrowser[0-9]{1,10}$" options:0 error:&err];
-        if (err != nil) {
-            // Couldn't initialize Regex; No is safer than Yes.
-            return NO;
-        }
-    }
-    if ([self.callbackIdPattern firstMatchInString:callbackId options:0 range:NSMakeRange(0, [callbackId length])]) {
-        return YES;
-    }
-    return NO;
-}
-
-/**
- * The iframe bridge provided for the InAppBrowser is capable of executing any oustanding callback belonging
- * to the InAppBrowser plugin. Care has been taken that other callbacks cannot be triggered, and that no
- * other code execution is possible.
- *
- * To trigger the bridge, the iframe (or any other resource) should attempt to load a url of the form:
- *
- * gap-iab://<callbackId>/<arguments>
- *
- * where <callbackId> is the string id of the callback to trigger (something like "InAppBrowser0123456789")
- *
- * If present, the path component of the special gap-iab:// url is expected to be a URL-escaped JSON-encoded
- * value to pass to the callback. [NSURL path] should take care of the URL-unescaping, and a JSON_EXCEPTION
- * is returned if the JSON is invalid.
- */
-- (BOOL)webView:(UIWebView*)theWebView shouldStartLoadWithRequest:(NSURLRequest*)request navigationType:(UIWebViewNavigationType)navigationType
+- (BOOL)web_View:(UIWebView*)theWebView shouldStartLoadWithRequest:(NSURLRequest*)request navigationType:(UIWebViewNavigationType)navigationType index:(NSString*) ind
 {
     NSURL* url = request.URL;
     BOOL isTopLevelNavigation = [request.URL isEqual:[request mainDocumentURL]];
-
+    self.index=ind;
     // See if the url uses the 'gap-iab' protocol. If so, the host should be the id of a callback to execute,
     // and the path, if present, should be a JSON-encoded value to pass to the callback.
     if ([[url scheme] isEqualToString:@"gap-iab"]) {
         NSString* scriptCallbackId = [url host];
         CDVPluginResult* pluginResult = nil;
 
-        if ([self isValidCallbackId:scriptCallbackId]) {
+        //if ([self isValidCallbackId:scriptCallbackId]) {
+        if (FALSE){
             NSString* scriptResult = [url path];
             NSError* __autoreleasing error = nil;
 
@@ -535,7 +423,7 @@
     } else if ((self.callbackId != nil) && isTopLevelNavigation) {
         // Send a loadstart event for each top-level navigation (includes redirects).
         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
-                                                      messageAsDictionary:@{@"type":@"loadstart", @"url":[url absoluteString]}];
+                                                      messageAsDictionary:@{@"type":@"loadstart", @"index":ind,@"data":[url absoluteString]}];
         [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
 
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
@@ -547,15 +435,20 @@
 - (void)webViewDidStartLoad:(UIWebView*)theWebView
 {
     _injectedIframeBridge = NO;
+    CDVEmbeddedWebViewPlug* el=[self.brw objectAtIndex:self.index.intValue];
+    NSString* url = [el.currentURL absoluteString];
+    //NSLog(@" -------- START LOAD----------- %@",url);
 }
 
 - (void)webViewDidFinishLoad:(UIWebView*)theWebView
 {
     if (self.callbackId != nil) {
-        // TODO: It would be more useful to return the URL the page is actually on (e.g. if it's been redirected).
-        NSString* url = [self.webplug.currentURL absoluteString];
+        CDVEmbeddedWebViewPlug* el=[self.brw objectAtIndex:self.index.intValue];
+        NSString* url = [el.currentURL absoluteString];
+        
+        //NSLog(@" -------- FINISHED LOAD----------- %@",url);
         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
-                                                      messageAsDictionary:@{@"type":@"loadstop", @"url":url}];
+                                                      messageAsDictionary:@{@"type":@"loadstop",@"index":self.index, @"data":url}];
         [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
 
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
@@ -565,12 +458,34 @@
 - (void)webView:(UIWebView*)theWebView didFailLoadWithError:(NSError*)error
 {
     if (self.callbackId != nil) {
-        NSString* url = [self.webplug.currentURL absoluteString];
-        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
-                                                      messageAsDictionary:@{@"type":@"loaderror", @"url":url, @"code": [NSNumber numberWithInteger:error.code], @"message": error.localizedDescription}];
-        [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
-
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
+        CDVEmbeddedWebViewPlug* el=[self.brw objectAtIndex:self.index.intValue];
+        NSString* url = [el.currentURL absoluteString];
+        NSLog(@" -------- LOAD ERROR  ----------- %@",url);
+        //CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR
+        //messageAsDictionary:@{@"type":@"loaderror", @"url":url, @"code": [NSNumber numberWithInteger:error.code], @"message": error.localizedDescription}];
+        
+        //   js interface
+        //
+        // call from js:
+        // android
+        // AppInterface.send(data);
+        //
+        // ios
+        // window.url="AppInterface://"+data;
+        
+        if ([[url substringWithRange:NSMakeRange(0,15)] isEqualToString: @"AppInterface://" ]==1){
+            NSString* data=[url substringWithRange:NSMakeRange(15,[url length]-15)];
+            data=[data stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                                          messageAsDictionary:@{@"type":@"jsMessage",@"index":self.index, @"data":data}];
+            [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
+        }else{
+          CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                                      messageAsDictionary:@{@"type":@"loaderror",@"index":self.index, @"data":error.localizedDescription}];
+          [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
+          [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
+        }
     }
 }
 
@@ -646,10 +561,15 @@
 
 @synthesize currentURL;
 
-- (id)initWithUserAgent:(NSString*)userAgent prevUserAgent:(NSString*)prevUserAgent browserOptions: (CDVWebviewOptions*) browserOptions
+- (id)initWithUserAgent:(NSString*)userAgent prevUserAgent:(NSString*)prevUserAgent browserOptions: (CDVWebviewOptions*) browserOptions index:(NSString*)index callbackId:(NSString*)callbackId
 {
+    //NSLog(@"---------webView:INIT WITH USER AGENT----------index:%@  cb:%@",index,callbackId);
     self = [super init];
+    self.index=index;
+    self.callbackId=callbackId;
+    
     if (self != nil) {
+        _index=index;
         _userAgent = userAgent;
         _prevUserAgent = prevUserAgent;
         _browserOptions = browserOptions;
@@ -658,10 +578,8 @@
 #else
         _webViewDelegate = [[CDVWebViewDelegate alloc] initWithDelegate:self];
 #endif
-        
         self.delegate = _webViewDelegate;
         self.backgroundColor = [UIColor whiteColor];
-        
         self.clearsContextBeforeDrawing = YES;
         self.clipsToBounds = YES;
         self.contentMode = UIViewContentModeScaleToFill;
@@ -677,26 +595,13 @@
 - (void)navigateTo:(NSURL*)url
 {
     NSURLRequest* request = [NSURLRequest requestWithURL:url];
-    
-    //if (_userAgentLockToken != 0)
-    //{
-        [self loadRequest:request];
-    //}
-    // else
-    // {
-    //     [CDVUserAgentUtil acquireLock:^(NSInteger lockToken) {
-    //         _userAgentLockToken = lockToken;
-    //         [CDVUserAgentUtil setUserAgent:_userAgent lockToken:lockToken];
-    //         [self loadRequest:request];
-    //     }];
-    // }
+    [self loadRequest:request];
 }
 
 - (void)webViewDidStartLoad:(UIWebView*)theWebView
 {
     // loading url, start spinner, update back/forward
-
-    
+    //NSLog(@"---------webView:START LOAD---------- %@",self.index);
     return [self.navigationDelegate webViewDidStartLoad:theWebView];
 }
 
@@ -707,13 +612,13 @@
     if (isTopLevelNavigation) {
         self.currentURL = request.URL;
     }
-    return [self.navigationDelegate webView:theWebView shouldStartLoadWithRequest:request navigationType:navigationType];
+    return [self.navigationDelegate web_View:theWebView shouldStartLoadWithRequest:request navigationType:navigationType index:self.index];
 }
 
 - (void)webViewDidFinishLoad:(UIWebView*)theWebView
 {
     // update url, stop spinner, update back/forward
-
+    NSLog(@"---------webView:FINISH LOAD----------");
     
     // Work around a bug where the first time a PDF is opened, all UIWebViews
     // reload their User-Agent from NSUserDefaults.
@@ -737,7 +642,7 @@
 - (void)webView:(UIWebView*)theWebView didFailLoadWithError:(NSError*)error
 {
     // log fail message, stop spinner, update back/forward
-    NSLog(@"webView:didFailLoadWithError - %ld: %@", (long)error.code, [error localizedDescription]);
+    NSLog(@"--------- webView:didFailLoadWithError - %ld: %@ -----------", (long)error.code, [error localizedDescription]);
     
     [self.navigationDelegate webView:theWebView didFailLoadWithError:error];
 }
