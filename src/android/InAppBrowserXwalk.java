@@ -85,13 +85,6 @@ public class InAppBrowserXwalk extends CordovaPlugin {
       if (action.equals("getScreenshot")) {
         this.getScreenshot(data);
       }
-      
-      if (action.equals("hasHistory")) {
-        this.hasHistory(data);
-      }
-      if (action.equals("goBack")) {
-        this.goBack(data);
-      }
 
       return true;
     }
@@ -238,7 +231,6 @@ public class InAppBrowserXwalk extends CordovaPlugin {
 
           dialogs[index] = dialog;
           xWalkWebViews[index] = xWalkWebView;
-          dialog.show();
         }
       });
     }
@@ -430,8 +422,8 @@ public class InAppBrowserXwalk extends CordovaPlugin {
           }
       });
     }
-    
-	// Check if browser has history
+
+// Check if browser has history
     public void hasHistory(JSONArray data)  throws JSONException {
 		final int index = data.getInt(0);
 		this.cordova.getActivity().runOnUiThread(new Runnable() {
@@ -466,4 +458,6 @@ public class InAppBrowserXwalk extends CordovaPlugin {
 					}
         });
     }
+
+
 }
