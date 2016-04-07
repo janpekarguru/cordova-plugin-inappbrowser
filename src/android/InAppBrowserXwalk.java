@@ -90,7 +90,7 @@ public class InAppBrowserXwalk extends CordovaPlugin {
         this.hasHistory(data);
       }
       if (action.equals("goBack")) {
-        this.hasHistory(data);
+        this.goBack(data);
       }
 
       return true;
