@@ -238,6 +238,7 @@ public class InAppBrowserXwalk extends CordovaPlugin {
 
           dialogs[index] = dialog;
           xWalkWebViews[index] = xWalkWebView;
+          dialog.show();
         }
       });
     }
