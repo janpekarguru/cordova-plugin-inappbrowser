@@ -82,7 +82,7 @@ public class InAppBrowserXwalk extends CordovaPlugin {
         this.setPosition(data);
       }
 
-      if (action.equals("executeScript")) {
+      if (action.equals("injectJS")) {
         this.injectJS(data);
       }
 
@@ -262,8 +262,9 @@ public class InAppBrowserXwalk extends CordovaPlugin {
 
     public void injectJS(JSONArray data) throws JSONException {
       final int index = data.getInt(0);
-      //final String script = data.getString(1);
-	  final String script="alert(document.head.innerHTML);";
+      final String script = data.getString(1);
+	  //final String script="alert('test');";
+	  Log.i("--------------------- injectJS---------", script);
       this.cordova.getActivity().runOnUiThread(new Runnable() {
         @Override
         public void run() {
@@ -424,12 +425,6 @@ public class InAppBrowserXwalk extends CordovaPlugin {
               result.setKeepCallback(true);
               callbackContext.sendPluginResult(result);
             } catch (JSONException ex) {}
-		
-		
-		
-		/*PluginResult result = new PluginResult(PluginResult.Status.OK, base64Image);
-		result.setKeepCallback(true);
-		callbackContext.sendPluginResult(result);*/
 		
             }
         });
