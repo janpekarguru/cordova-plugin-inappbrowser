@@ -1,5 +1,3 @@
-cordova.define("com.zegenie.cordova.plugin.inappbrowserxwalk.inAppBrowserXwalk", function(require, exports, module) {
-
 /*global cordova, module*/
 
 var xwalks = new Array();
@@ -76,5 +74,3 @@ module.exports = {
   }
 };
 
-
-});
