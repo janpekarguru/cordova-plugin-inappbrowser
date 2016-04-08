@@ -1,10 +1,9 @@
+cordova.define("com.zegenie.cordova.plugin.inappbrowserxwalk.inAppBrowserXwalk", function(require, exports, module) {
 
 /*global cordova, module*/
 
 var xwalks = new Array();
 var callbacks = new Array();
-var x=navigator.userAgent;
-var is_iOS=x.match(/(ios)|(iphone)|(ipod)|(ipad)/ig);
 
 function InAppBrowserXwalk(index) {
   this.index = index;
@@ -37,9 +36,7 @@ InAppBrowserXwalk.prototype = {
     cordova.exec(null, null, "InAppBrowserXwalk", "injectJS", [this.index, code]);
   },
   insertCSS: function(styles) {
-    var code = "var link = document.createElement('link'); link.type='text/css'; link.innerHTML = '" + styles + "'; document.getElementsByTagName('head')[0].appendChild(link);";
-    if (is_iOS)
-      code="(function(d) { var c = d.createElement('style'); c.innerHTML = '"+styles+"'; d.head.appendChild(c); })(document)";
+    var code="(function(d) { var c = d.createElement('style'); c.innerHTML = '"+styles+"'; d.head.appendChild(c); })(document)";
     cordova.exec(null, null, "InAppBrowserXwalk", "injectJS", [this.index, code]);
   },
   insertCSSFile: function(path) {
@@ -79,3 +76,5 @@ module.exports = {
   }
 };
 
+
+});
