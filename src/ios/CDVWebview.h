@@ -36,7 +36,7 @@
 
 @property (nonatomic, strong) CDVEmbeddedWebViewPlug* webplug;
 @property (nonatomic, strong) NSMutableArray *brw;
-@property (nonatomic) int *index;
+@property (nonatomic) NSString* index;
 @property (nonatomic, copy) NSString* callbackId;
 
 @property (nonatomic, copy) NSRegularExpression *callbackIdPattern;
@@ -54,14 +54,19 @@
 - (void)hasHistory:(CDVInvokedUrlCommand*)command;
 - (void)goBack:(CDVInvokedUrlCommand*)command;
 
+- (void)injectJS:(CDVInvokedUrlCommand*)command;
+/*
 - (void)injectScriptCode:(CDVInvokedUrlCommand*)command;
 - (void)injectScriptFile:(CDVInvokedUrlCommand*)command;
 - (void)injectStyleCode:(CDVInvokedUrlCommand*)command;
 - (void)injectStyleFile:(CDVInvokedUrlCommand*)command;
-
+*/
 @end
 
 @interface CDVWebviewOptions : NSObject {}
+@property (nonatomic) NSString* index;
+@property (nonatomic, copy) NSString* callbackId;
+@property (nonatomic, copy) NSRegularExpression *callbackIdPattern;
 
 @property (nonatomic, assign) BOOL location;
 @property (nonatomic, assign) BOOL toolbar;
@@ -96,6 +101,7 @@
     NSString* _prevUserAgent;
     NSInteger _userAgentLockToken;
     CDVWebviewOptions *_browserOptions;
+    
 
 #ifdef __CORDOVA_4_0_0
     CDVUIWebViewDelegate* _webViewDelegate;
@@ -106,9 +112,11 @@
 
 @property (nonatomic, weak) CDVEmbeddedWebView* navigationDelegate;
 @property (nonatomic) NSURL* currentURL;
+@property (nonatomic) NSString* callbackId;
+@property (nonatomic) NSString* index;
 
 - (void)navigateTo:(NSURL*)url;
 
-- (id)initWithUserAgent:(NSString*)userAgent prevUserAgent:(NSString*)prevUserAgent browserOptions: (CDVWebviewOptions*) browserOptions;
+- (id)initWithUserAgent:(NSString*)userAgent prevUserAgent:(NSString*)prevUserAgent browserOptions: (CDVWebviewOptions*) browserOptions index:(NSString*)index callbackId:(NSString*)callbackId;
 
 @end
