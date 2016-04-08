@@ -90,6 +90,7 @@
     NSString* url = [command argumentAtIndex:1];
     CDVEmbeddedWebViewPlug* el=[self.brw objectAtIndex:i.intValue];
     
+    //if (self.webplug == nil) {
     if (el == nil) {
         NSLog(@"Tried to load IAB after it was closed.");
         return;
@@ -101,8 +102,16 @@
         NSURL* baseUrl = [self.webView.request URL];
 #endif
         NSURL* absoluteUrl = [[NSURL URLWithString:url relativeToURL:baseUrl] absoluteURL];
+        
+        //[self.webplug navigateTo:absoluteUrl];
+        
+        
         [el navigateTo:absoluteUrl];
+        
     }
+    // else {
+    //     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"incorrect number of arguments"];
+    // }
 }
 
 - (void)close:(CDVInvokedUrlCommand*)command
@@ -248,6 +257,15 @@
     
     // prevent webView from bouncing
     if (browserOptions.disallowoverscroll) {
+        /*if ([self.webplug respondsToSelector:@selector(scrollView)]) {
+            ((UIScrollView*)[self.webplug scrollView]).bounces = NO;
+        } else {
+            for (id subview in self.webplug.subviews) {
+                if ([[subview class] isSubclassOfClass:[UIScrollView class]]) {
+                    ((UIScrollView*)subview).bounces = NO;
+                }
+            }
+        }*/
         if ([el respondsToSelector:@selector(scrollView)]) {
             ((UIScrollView*)[el scrollView]).bounces = NO;
         } else {
@@ -337,6 +355,10 @@
         NSData *imageData = UIImageJPEGRepresentation(image, fq);
         //encodedString = [imageData base64Encoding];
         encodedString =[imageData base64EncodedStringWithOptions:NSDataBase64EncodingEndLineWithLineFeed];
+    
+        //NSString *combined = [NSString stringWithFormat:@"{\"type\":\"onScreenshot\",\"index\":%@,\"data\":\"%@\"}", i, encodedString];
+        //pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK  messageAsString:combined];
+        
         
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
                                      messageAsDictionary:@{@"type":@"onScreenshot", @"index":i,@"data":encodedString}];
