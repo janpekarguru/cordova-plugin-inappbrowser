@@ -263,8 +263,7 @@ public class InAppBrowserXwalk extends CordovaPlugin {
     public void injectJS(JSONArray data) throws JSONException {
       final int index = data.getInt(0);
       final String script = data.getString(1);
-	  //final String script="alert('test');";
-	  Log.i("--------------------- injectJS---------", script);
+
       this.cordova.getActivity().runOnUiThread(new Runnable() {
         @Override
         public void run() {
