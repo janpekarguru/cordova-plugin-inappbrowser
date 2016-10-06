@@ -488,21 +488,5 @@ public class InAppBrowserXwalk extends CordovaPlugin {
 				xWalkWebViews[i].onDestroy();
 			}
 	}
-	/*
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		for (int i = 0; i < 6; i++) 
-			if (xWalkWebViews[i] != null) {
-				xWalkWebViews[i].onActivityResult(requestCode, resultCode, data);
-			}
-	}
-
-	@Override
-	protected void onNewIntent(Intent intent) {
-		for (int i = 0; i < 6; i++) 
-			if (xWalkWebViews[i] != null) {
-			   xWalkWebViews[i].onNewIntent(intent);
-			}
-	}
-	*/
+	
 }
