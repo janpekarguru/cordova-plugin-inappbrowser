@@ -22,9 +22,6 @@ import android.view.Window;
 import android.view.Gravity;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
-import android.view.TextureView;
-import android.view.ViewGroup;
-
 import android.content.Context;
 import android.app.Activity;
 import android.webkit.ValueCallback;
@@ -36,9 +33,8 @@ import android.graphics.drawable.Drawable;
 import android.util.Base64;
 import android.util.Log;
 
-
-
-
+import android.view.WindowManager;
+import android.view.WindowManager.LayoutParams;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 
@@ -82,22 +78,14 @@ public class InAppBrowserXwalk extends CordovaPlugin {
         this.setPosition(data);
       }
 
-      if (action.equals("injectJS")) {
+      if (action.equals("executeScript")) {
         this.injectJS(data);
       }
 
       if (action.equals("getScreenshot")) {
         this.getScreenshot(data);
       }
-	  
-	  if (action.equals("hasHistory")) {
-        this.hasHistory(data);
-      }
-	  
-      if (action.equals("goBack")) {
-        this.goBack(data);
-      }
-	  
+
       return true;
     }
 
@@ -243,7 +231,6 @@ public class InAppBrowserXwalk extends CordovaPlugin {
 
           dialogs[index] = dialog;
           xWalkWebViews[index] = xWalkWebView;
-		  dialog.show();
         }
       });
     }
@@ -263,7 +250,6 @@ public class InAppBrowserXwalk extends CordovaPlugin {
     public void injectJS(JSONArray data) throws JSONException {
       final int index = data.getInt(0);
       final String script = data.getString(1);
-
       this.cordova.getActivity().runOnUiThread(new Runnable() {
         @Override
         public void run() {
@@ -328,7 +314,7 @@ public class InAppBrowserXwalk extends CordovaPlugin {
           }
       });
     }
-/*
+
     public void getScreenshot(JSONArray data)  throws JSONException {
       final int index = data.getInt(0);
       final int quality = data.getInt(1);
@@ -391,130 +377,6 @@ public class InAppBrowserXwalk extends CordovaPlugin {
         }
         return temp;
     }
-*/
-
-
-// Get the screenshot of the browser dialog.
-    // Params : JPEG Quality, and what to do callback.
-	// add to config.xml for this to work:
-	// <preference name="CrosswalkAnimatable" value="true" />
-    public void getScreenshot(JSONArray data)  throws JSONException {
-		final int i=data.getInt(0);
-        float fq =  (float) data.getDouble(1);
-		final int q=Math.round(fq*100);
-		
-        this.cordova.getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-
-                if(dialogs[i] == null)
-                	return;
-
-                //Window dialogWindow = dialogs[i].getWindow();
-                Bitmap bitmap;
-				bitmap = getBitmap(xWalkWebViews[i]);
-                String base64Image = bitMapToString(bitmap,q);
-		
-			try {
-              JSONObject obj = new JSONObject();
-              obj.put("type", "onScreenshot");
-              obj.put("index", i);
-              obj.put("data", base64Image);
-              PluginResult result = new PluginResult(PluginResult.Status.OK, obj);
-              result.setKeepCallback(true);
-              callbackContext.sendPluginResult(result);
-            } catch (JSONException ex) {}
-		
-            }
-        });
-    }
-
-	
-	
-	// helper function for xwalk bitmap
-	private Bitmap getBitmap(View ViewXW) {
-		Bitmap bitmap = null;
-		try {
-			TextureView textureView = findXWalkTextureView((ViewGroup)ViewXW);
-				if (textureView != null) {
-					bitmap = textureView.getBitmap();
-					return bitmap;
-				}
-		} catch(Exception e) {
-			 e.printStackTrace();
-		}
-		Log.e("ERW", "getBitmap ---- bitmap from textureview failed");
-		return bitmap;
-	}
-	// helper function for xwalk bitmap
-	private TextureView findXWalkTextureView(ViewGroup group) {
-		int childCount = group.getChildCount();
-		for(int i=0;i<childCount;i++) {
-			View child = group.getChildAt(i);
-			if(child instanceof TextureView) {
-				String parentClassName = child.getParent().getClass().toString();
-				boolean isRightKindOfParent = (parentClassName.contains("XWalk"));
-				if(isRightKindOfParent || true) {
-					return (TextureView) child;
-				}
-			} else if(child instanceof ViewGroup) {
-				TextureView textureView = findXWalkTextureView((ViewGroup) child);
-				if(textureView != null) {
-					return textureView;
-				}
-			}
-		}
-		return null;
-	}
-	
-	
-    // Helper method for storing the bitmap image for JPEG base64.
-    private String bitMapToString(Bitmap bitmap, int q) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, q, baos);
-        byte[] b = baos.toByteArray();
-        String temp = null;
-        try {
-            System.gc();
-            temp = Base64.encodeToString(b, Base64.DEFAULT);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } catch (OutOfMemoryError e) {
-            baos = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 10, baos);
-            b = baos.toByteArray();
-            temp = Base64.encodeToString(b, Base64.DEFAULT);
-            Log.e("EWN", "Out of memory error catched");
-        }
-        return temp;
-    }
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public void hideBrowser(JSONArray data) throws JSONException {
       final int index = data.getInt(0);
@@ -596,6 +458,51 @@ public class InAppBrowserXwalk extends CordovaPlugin {
 					}
         });
     }
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		for (int i = 0; i < 6; i++) 
+			if (xWalkWebViews[i] != null) {
+				xWalkWebViews[i].pauseTimers();
+				xWalkWebViews[i].onHide();
+			}
+	}
+	
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		for (int i = 0; i < 6; i++) 
+			if (xWalkWebViews[i] != null) {
+				xWalkWebViews[i].resumeTimers();
+				xWalkWebViews[i].onShow();
+			}
+	}
 
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		for (int i = 0; i < 6; i++) 
+			if (xWalkWebViews[i] != null) {
+				xWalkWebViews[i].onDestroy();
+			}
+	}
 
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		for (int i = 0; i < 6; i++) 
+			if (xWalkWebViews[i] != null) {
+				xWalkWebViews[i].onActivityResult(requestCode, resultCode, data);
+			}
+	}
+
+	@Override
+	protected void onNewIntent(Intent intent) {
+		for (int i = 0; i < 6; i++) 
+			if (xWalkWebViews[i] != null) {
+			   xWalkWebViews[i].onNewIntent(intent);
+			}
+	}
+	
 }
