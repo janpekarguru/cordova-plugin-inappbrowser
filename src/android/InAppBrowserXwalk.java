@@ -459,34 +459,6 @@ public class InAppBrowserXwalk extends CordovaPlugin {
         });
     }
 	
-	@Override
-	protected void onPause() {
-		super.onPause();
-		for (int i = 0; i < 6; i++) 
-			if (xWalkWebViews[i] != null) {
-				xWalkWebViews[i].pauseTimers();
-				xWalkWebViews[i].onHide();
-			}
-	}
 	
-	
-	@Override
-	protected void onResume() {
-		super.onResume();
-		for (int i = 0; i < 6; i++) 
-			if (xWalkWebViews[i] != null) {
-				xWalkWebViews[i].resumeTimers();
-				xWalkWebViews[i].onShow();
-			}
-	}
-
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		for (int i = 0; i < 6; i++) 
-			if (xWalkWebViews[i] != null) {
-				xWalkWebViews[i].onDestroy();
-			}
-	}
 	
 }
