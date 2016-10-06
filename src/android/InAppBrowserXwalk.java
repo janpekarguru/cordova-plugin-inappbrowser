@@ -488,7 +488,7 @@ public class InAppBrowserXwalk extends CordovaPlugin {
 				xWalkWebViews[i].onDestroy();
 			}
 	}
-
+	/*
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		for (int i = 0; i < 6; i++) 
@@ -504,5 +504,5 @@ public class InAppBrowserXwalk extends CordovaPlugin {
 			   xWalkWebViews[i].onNewIntent(intent);
 			}
 	}
-	
+	*/
 }
